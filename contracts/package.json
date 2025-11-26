@@ -4,7 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "hardhat test",
+    "compile": "hardhat compile",
+    "deploy:local": "hardhat run scripts/deploy.ts --network hardhat",
+    "deploy:sepolia": "hardhat run scripts/deploy.ts --network baseSepolia",
+    "deploy:mocks": "hardhat run scripts/deployMockTokens.ts --network baseSepolia",
+    "verify": "hardhat verify --network baseSepolia",
+    "coverage": "hardhat coverage",
+    "gas-report": "REPORT_GAS=true hardhat test"
   },
   "keywords": [],
   "author": "",
@@ -14,6 +21,9 @@
     "@nomicfoundation/hardhat-toolbox": "^6.1.0",
     "@openzeppelin/contracts": "^5.4.0",
     "@openzeppelin/contracts-upgradeable": "^5.4.0",
-    "hardhat": "^3.0.15"
+    "@openzeppelin/hardhat-upgrades": "^3.5.0",
+    "hardhat": "^3.0.15",
+    "hardhat-gas-reporter": "^2.2.1",
+    "solidity-coverage": "^0.8.13"
   }
 }

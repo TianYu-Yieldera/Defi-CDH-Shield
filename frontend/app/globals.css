@@ -87,10 +87,26 @@
   .text-number {
     font-variant-numeric: tabular-nums;
   }
-  
+
   .bg-grid-pattern {
     background-size: 40px 40px;
     background-image: linear-gradient(to right, rgb(255 255 255 / 0.05) 1px, transparent 1px),
                       linear-gradient(to bottom, rgb(255 255 255 / 0.05) 1px, transparent 1px);
+  }
+
+  /* Toast animations */
+  @keyframes slide-in-right {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  .animate-slide-in-right {
+    animation: slide-in-right 0.3s ease-out;
   }
 }
