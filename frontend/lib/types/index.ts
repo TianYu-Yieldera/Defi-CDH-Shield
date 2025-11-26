@@ -109,5 +109,6 @@ export interface Insights {
 export interface Metadata {
   analyzedAt: string;
   cachedUntil: string;
-  model: 'claude-sonnet' | 'claude-haiku';
+  model: 'mock';
+  provider: 'mock';
 }
