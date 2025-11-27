@@ -23,7 +23,7 @@ async function main() {
 
   await mockUSDC.waitForDeployment();
   const usdcAddress = await mockUSDC.getAddress();
-  console.log("✅ MockUSDC deployed to:", usdcAddress);
+  console.log("MockUSDC deployed to:", usdcAddress);
 
   // Deploy MockWETH
   console.log("\n2. Deploying MockWETH...");
@@ -37,7 +37,7 @@ async function main() {
 
   await mockWETH.waitForDeployment();
   const wethAddress = await mockWETH.getAddress();
-  console.log("✅ MockWETH deployed to:", wethAddress);
+  console.log("MockWETH deployed to:", wethAddress);
 
   // Deploy MockDAI
   console.log("\n3. Deploying MockDAI...");
@@ -51,7 +51,7 @@ async function main() {
 
   await mockDAI.waitForDeployment();
   const daiAddress = await mockDAI.getAddress();
-  console.log("✅ MockDAI deployed to:", daiAddress);
+  console.log("MockDAI deployed to:", daiAddress);
 
   // Deploy MockPriceOracle
   console.log("\n4. Deploying MockPriceOracle...");
@@ -60,7 +60,7 @@ async function main() {
 
   await priceOracle.waitForDeployment();
   const oracleAddress = await priceOracle.getAddress();
-  console.log("✅ MockPriceOracle deployed to:", oracleAddress);
+  console.log("MockPriceOracle deployed to:", oracleAddress);
 
   // Set initial prices (in USD with 18 decimals)
   console.log("\n5. Setting initial prices...");
@@ -72,11 +72,11 @@ async function main() {
       ethers.parseEther("1"), // DAI = $1
     ]
   );
-  console.log("✅ Initial prices set");
+  console.log("Initial prices set");
 
   // Print summary
   console.log("\n" + "=".repeat(60));
-  console.log("📋 Deployment Summary");
+  console.log("Deployment Summary");
   console.log("=".repeat(60));
   console.log("Network: BASE Sepolia (Chain ID: 84532)");
   console.log("Deployer:", deployer.address);
@@ -89,7 +89,7 @@ async function main() {
   console.log("  USDC: 10,000 USDC/day");
   console.log("  WETH: 10 WETH/day");
   console.log("  DAI: 10,000 DAI/day");
-  console.log("\n💡 Use the faucet() function to mint test tokens!");
+  console.log("\nTIP: Use the faucet() function to mint test tokens!");
   console.log("=".repeat(60));
 
   // Save addresses to file
@@ -111,10 +111,10 @@ async function main() {
     "./deployments/baseSepolia.json",
     JSON.stringify(addresses, null, 2)
   );
-  console.log("\n📝 Addresses saved to ./deployments/baseSepolia.json");
+  console.log("\nAddresses saved to ./deployments/baseSepolia.json");
 
   // Verification commands
-  console.log("\n🔍 To verify contracts on Basescan, run:");
+  console.log("\nTo verify contracts on Basescan, run:");
   console.log(`npx hardhat verify --network baseSepolia ${usdcAddress} "Mock USD Coin" "USDC" 6 "1000000000000" "10000000000"`);
   console.log(`npx hardhat verify --network baseSepolia ${wethAddress} "Mock Wrapped Ether" "WETH" 18 "1000000000000000000000" "10000000000000000000"`);
   console.log(`npx hardhat verify --network baseSepolia ${daiAddress} "Mock DAI Stablecoin" "DAI" 18 "1000000000000000000000000" "10000000000000000000000"`);

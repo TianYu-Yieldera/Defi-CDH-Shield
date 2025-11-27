@@ -1,14 +1,13 @@
 import { AnalysisResponse, PortfolioData, Recommendation, HealthScore } from '../types';
 
 /**
- * Enhanced Rule-based AI Analyzer
- * Free, no API required, pure local computation
+ * Portfolio Analysis Engine
+ * Local computation with rule-based algorithms
  *
- * Advantages:
- * - Zero cost
- * - Fast response (<100ms)
- * - Data privacy (no external calls)
- * - Optimized for DeFi scenarios
+ * Features:
+ * - Fast response time
+ * - Privacy-focused (local processing)
+ * - DeFi-optimized analysis
  */
 export class EnhancedMockAI {
 
@@ -30,8 +29,8 @@ export class EnhancedMockAI {
       metadata: {
         analyzedAt: new Date().toISOString(),
         cachedUntil: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
-        model: 'mock',
-        provider: 'mock',
+        model: 'rule-based',
+        provider: 'local',
       },
     };
   }
@@ -433,4 +432,4 @@ export class EnhancedMockAI {
 }
 
 // Export singleton instance
-export const enhancedMockAI = new EnhancedMockAI();
+export const portfolioAnalyzer = new EnhancedMockAI();

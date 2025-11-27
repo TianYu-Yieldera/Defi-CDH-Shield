@@ -95,10 +95,10 @@ function ToastItem({
   };
 
   const typeIcons = {
-    success: "✓",
-    error: "✕",
-    warning: "⚠",
-    info: "ℹ",
+    success: "v",
+    error: "x",
+    warning: "!",
+    info: "i",
   };
 
   return (

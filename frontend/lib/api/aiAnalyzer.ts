@@ -2,26 +2,26 @@ import { AnalysisResponse, PortfolioData } from '../types';
 import { EnhancedMockAI } from './enhancedMockAI';
 
 /**
- * AI Analyzer Interface
+ * Portfolio Analyzer Interface
  */
-export interface IAIAnalyzer {
+export interface IPortfolioAnalyzer {
   analyze(portfolio: PortfolioData): Promise<AnalysisResponse>;
 }
 
 /**
- * AI Analyzer Factory
- * Returns the rule-based analyzer instance
+ * Portfolio Analyzer Factory
+ * Returns the analysis engine instance
  */
-export class AIAnalyzerFactory {
-  static getAnalyzer(): IAIAnalyzer {
+export class PortfolioAnalyzerFactory {
+  static getAnalyzer(): IPortfolioAnalyzer {
     return new EnhancedMockAI();
   }
 }
 
 /**
- * Default AI analyzer instance
+ * Default portfolio analyzer instance
  */
-export const aiAnalyzer = AIAnalyzerFactory.getAnalyzer();
+export const portfolioAnalyzer = PortfolioAnalyzerFactory.getAnalyzer();
 
 /**
  * Analyze portfolio using rule-based engine
@@ -29,5 +29,5 @@ export const aiAnalyzer = AIAnalyzerFactory.getAnalyzer();
 export async function analyzePortfolio(
   portfolio: PortfolioData
 ): Promise<AnalysisResponse> {
-  return aiAnalyzer.analyze(portfolio);
+  return portfolioAnalyzer.analyze(portfolio);
 }

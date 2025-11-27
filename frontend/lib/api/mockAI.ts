@@ -1,6 +1,6 @@
 import { AnalysisResponse, PortfolioData, Recommendation } from '../types';
 
-export class MockAIAnalyzer {
+export class PortfolioAnalysisEngine {
   async analyze(portfolio: PortfolioData): Promise<AnalysisResponse> {
     await new Promise(resolve => setTimeout(resolve, 1000));
 
@@ -22,8 +22,8 @@ export class MockAIAnalyzer {
       metadata: {
         analyzedAt: new Date().toISOString(),
         cachedUntil: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-        model: 'mock',
-        provider: 'mock',
+        model: 'rule-based',
+        provider: 'local',
       },
     };
   }
@@ -110,4 +110,4 @@ export class MockAIAnalyzer {
   }
 }
 
-export const mockAI = new MockAIAnalyzer();
+export const analysisEngine = new PortfolioAnalysisEngine();
