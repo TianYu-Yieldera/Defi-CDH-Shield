@@ -1,17 +1,17 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAccount } from 'wagmi';
 import { useEffect } from 'react';
-import { cdpApi } from '@/services/cdpApi';
-import { useCDPStore } from '@/store/cdpStore';
+import { portfolioApi } from '@/services/portfolioApi';
+import { usePortfolioStore } from '@/store/portfolioStore';
 
-export function useCDPPositions() {
+export function usePortfolio() {
   const { address } = useAccount();
   const queryClient = useQueryClient();
-  const { setPositions, setLoading, setError } = useCDPStore();
+  const { setAssets, setLoading, setError } = usePortfolioStore();
 
   const query = useQuery({
-    queryKey: ['cdp-positions', address],
-    queryFn: () => cdpApi.getPositions(address!),
+    queryKey: ['portfolio-assets', address],
+    queryFn: () => portfolioApi.getAssets(address!),
     enabled: !!address,
     refetchInterval: 30000,
     staleTime: 10000,
@@ -20,10 +20,10 @@ export function useCDPPositions() {
   // Sync query state to Zustand store
   useEffect(() => {
     if (query.data) {
-      setPositions(query.data);
+      setAssets(query.data);
       setLoading(false);
     }
-  }, [query.data, setPositions, setLoading]);
+  }, [query.data, setAssets, setLoading]);
 
   useEffect(() => {
     if (query.error) {
@@ -39,7 +39,7 @@ export function useCDPPositions() {
   }, [query.isLoading, setLoading]);
 
   const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: ['cdp-positions', address] });
+    queryClient.invalidateQueries({ queryKey: ['portfolio-assets', address] });
   };
 
   const refetch = () => {
@@ -48,7 +48,7 @@ export function useCDPPositions() {
   };
 
   return {
-    positions: query.data || [],
+    assets: query.data || [],
     isLoading: query.isLoading,
     error: query.error,
     refetch,
