@@ -14,6 +14,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
     defaultOptions: {
       queries: {
         staleTime: 60 * 1000,
+        refetchOnWindowFocus: false,
+        retry: 1,
       },
     },
   }))
@@ -23,9 +25,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider
           theme={darkTheme({
-            accentColor: 'hsl(217, 91%, 60%)', // Matches our primary color
+            accentColor: 'hsl(217, 91%, 60%)',
             accentColorForeground: 'white',
-            borderRadius: 'small', // More tech/financial look
+            borderRadius: 'small',
             fontStack: 'system',
             overlayBlur: 'small',
           })}
