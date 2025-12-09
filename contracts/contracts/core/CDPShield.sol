@@ -9,6 +9,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../interfaces/ICDPShield.sol";
 import "../interfaces/IPriceOracle.sol";
 import "../interfaces/IDEXAggregator.sol";
+import "../interfaces/IFlashLoanReceiver.sol";
 
 /**
  * @title CDPShield
@@ -25,6 +26,8 @@ contract CDPShield is ICDPShield, Ownable, ReentrancyGuard, Pausable {
 
     IPriceOracle public priceOracle;
     IDEXAggregator public dexAggregator;
+    address public aavePool;
+    address public flashLoanReceiver;
 
     uint256 private _positionIdCounter;
 
@@ -584,5 +587,173 @@ contract CDPShield is ICDPShield, Ownable, ReentrancyGuard, Pausable {
         require(token != address(0), "Invalid token");
         require(amount > 0, "Invalid amount");
         IERC20(token).safeTransfer(msg.sender, amount);
+    }
+
+    /**
+     * @notice Set Aave Pool address (owner only)
+     * @param _aavePool Aave V3 Pool address
+     */
+    function setAavePool(address _aavePool) external onlyOwner {
+        require(_aavePool != address(0), "Invalid address");
+        aavePool = _aavePool;
+    }
+
+    /**
+     * @notice Set Flash Loan Receiver address (owner only)
+     * @param _flashLoanReceiver Flash loan receiver contract address
+     */
+    function setFlashLoanReceiver(address _flashLoanReceiver) external onlyOwner {
+        require(_flashLoanReceiver != address(0), "Invalid address");
+        flashLoanReceiver = _flashLoanReceiver;
+    }
+
+    /**
+     * @notice Reduce leverage using flash loan
+     * @dev Uses Aave V3 flash loan to reduce position leverage without upfront capital
+     * @param positionId Position ID to reduce leverage
+     * @param debtToRepay Amount of debt to repay
+     * @param minAmountOut Minimum amount of debt tokens expected from swap
+     * @return newHealthFactor The new health factor after operation
+     */
+    function flashLoanReduceLeverage(
+        uint256 positionId,
+        uint256 debtToRepay,
+        uint256 minAmountOut
+    )
+        external
+        nonReentrant
+        whenNotPaused
+        positionExists(positionId)
+        onlyPositionOwner(positionId)
+        positionActive(positionId)
+        returns (uint256 newHealthFactor)
+    {
+        require(aavePool != address(0), "Aave Pool not set");
+        require(flashLoanReceiver != address(0), "Flash loan receiver not set");
+        require(debtToRepay > 0, "Invalid debt amount");
+
+        Position storage position = _positions[positionId];
+        require(debtToRepay <= position.debtAmount, "Exceeds debt amount");
+
+        // Calculate collateral needed for swap
+        uint256 collateralNeeded = _calculateCollateralNeeded(
+            debtToRepay,
+            position.collateralToken,
+            position.debtToken
+        );
+        require(collateralNeeded <= position.collateralAmount, "Insufficient collateral");
+
+        // Encode flash loan parameters
+        bytes memory params = abi.encode(
+            uint8(0), // OperationType.REDUCE_LEVERAGE
+            positionId,
+            position.collateralToken,
+            position.debtToken,
+            collateralNeeded,
+            debtToRepay,
+            minAmountOut,
+            msg.sender
+        );
+
+        // Approve flash loan receiver to pull collateral
+        IERC20(position.collateralToken).safeTransferFrom(
+            msg.sender,
+            flashLoanReceiver,
+            collateralNeeded
+        );
+
+        // Execute flash loan
+        IAavePool(aavePool).flashLoanSimple(
+            flashLoanReceiver,
+            position.debtToken,
+            debtToRepay,
+            params,
+            0 // referral code
+        );
+
+        // Update position after successful flash loan
+        position.collateralAmount -= collateralNeeded;
+        position.debtAmount -= debtToRepay;
+        position.lastUpdated = block.timestamp;
+
+        newHealthFactor = calculateHealthFactor(
+            position.collateralAmount,
+            position.debtAmount,
+            position.collateralToken,
+            position.debtToken
+        );
+        position.healthFactor = newHealthFactor;
+
+        emit LeverageReduced(positionId, debtToRepay, collateralNeeded, newHealthFactor);
+
+        return newHealthFactor;
+    }
+
+    /**
+     * @notice Emergency close position using flash loan
+     * @dev Uses Aave V3 flash loan to close position in critical health factor situations
+     * @param positionId Position ID to close
+     * @param minAmountOut Minimum amount of debt tokens expected from swap
+     * @return success Whether the operation was successful
+     */
+    function flashLoanEmergencyClose(
+        uint256 positionId,
+        uint256 minAmountOut
+    )
+        external
+        nonReentrant
+        positionExists(positionId)
+        onlyPositionOwner(positionId)
+        positionActive(positionId)
+        returns (bool success)
+    {
+        require(aavePool != address(0), "Aave Pool not set");
+        require(flashLoanReceiver != address(0), "Flash loan receiver not set");
+
+        Position storage position = _positions[positionId];
+
+        require(
+            position.healthFactor <= LIQUIDATION_THRESHOLD,
+            "Health factor not critical"
+        );
+
+        // Encode flash loan parameters
+        bytes memory params = abi.encode(
+            uint8(1), // OperationType.EMERGENCY_CLOSE
+            positionId,
+            position.collateralToken,
+            position.debtToken,
+            position.collateralAmount,
+            position.debtAmount,
+            minAmountOut,
+            msg.sender
+        );
+
+        // Transfer all collateral to flash loan receiver
+        IERC20(position.collateralToken).safeTransferFrom(
+            msg.sender,
+            flashLoanReceiver,
+            position.collateralAmount
+        );
+
+        // Execute flash loan for full debt amount
+        IAavePool(aavePool).flashLoanSimple(
+            flashLoanReceiver,
+            position.debtToken,
+            position.debtAmount,
+            params,
+            0 // referral code
+        );
+
+        // Update position as closed
+        position.collateralAmount = 0;
+        position.debtAmount = 0;
+        position.status = PositionStatus.Closed;
+        position.healthFactor = 0;
+        position.lastUpdated = block.timestamp;
+
+        emit EmergencyClose(positionId, block.timestamp);
+
+        return true;
     }
 }

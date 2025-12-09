@@ -1,0 +1,16 @@
+{
+  "network": "baseSepolia",
+  "chainId": 84532,
+  "deployedAt": "2025-12-09T05:05:01.474Z",
+  "deployer": "0x3C07226A3f1488320426eB5FE9976f72E5712346",
+  "contracts": {
+    "MockWETH": "0xD6d436677E6F9EbC729A5eC9D76b8f3B9F79807F",
+    "MockUSDC": "0xfB7CAe102DbF4a52dcD57E4EaC9eAd9fc41584b1",
+    "MockDAI": "0x9C0b8124781F2710Fa7f5c8D8e919941aA216c1E",
+    "MockPriceOracle": "0xb1317a834a22CE7E4b26dEcb566F6Fe3D795e42E",
+    "MockDEXAggregator": "0x73912D548B81a7c8a12953eFDA8dF9af4F9f851d",
+    "MockAavePool": "0xdF47B2cb7d2a224E3701bEDbe1Cf00D9085e7191",
+    "CDPShield": "0xe2E8d33CB59CfCA118EF5F44A24764e7b88A4534",
+    "FlashLoanReceiver": "0xDd02C2734410bbc865Fc28715a0F0755416E18d7"
+  }
+}

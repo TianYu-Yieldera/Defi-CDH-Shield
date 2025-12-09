@@ -269,7 +269,8 @@ describe("CDPShield", function () {
                 tokenIn: await collateralToken.getAddress(),
                 tokenOut: await debtToken.getAddress(),
                 amountIn: ethers.parseEther("1.01"),
-                minAmountOut: debtToRepay
+                minAmountOut: debtToRepay,
+                swapData: "0x"
             };
 
             const tx = await cdpShield.connect(user1).reduceLeverage(
@@ -295,7 +296,8 @@ describe("CDPShield", function () {
                 tokenIn: await collateralToken.getAddress(),
                 tokenOut: await debtToken.getAddress(),
                 amountIn: ethers.parseEther("1.01"),
-                minAmountOut: debtToRepay
+                minAmountOut: debtToRepay,
+                swapData: "0x"
             };
 
             await cdpShield.connect(user1).reduceLeverage(
@@ -316,7 +318,8 @@ describe("CDPShield", function () {
                 tokenIn: await collateralToken.getAddress(),
                 tokenOut: await debtToken.getAddress(),
                 amountIn: ethers.parseEther("10.1"),
-                minAmountOut: debtToRepay
+                minAmountOut: debtToRepay,
+                swapData: "0x"
             };
 
             await expect(
