@@ -54,7 +54,7 @@ export function useWebSocket() {
     const unsubPrice = ws.on('price_update', (data) => {
       console.log('Price update received:', data);
       if (data.token && data.price) {
-        updatePrice(data.token, data.price);
+        updatePrice(data.token, data.price, data.change24h ?? 0);
       }
     });
 

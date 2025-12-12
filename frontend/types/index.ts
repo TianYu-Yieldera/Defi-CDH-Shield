@@ -14,7 +14,23 @@ export interface CDPPosition {
   timestamp: number
 }
 
+export interface Position {
+  id: string
+  protocol: string
+  type: "CDP" | "LP" | "Staking" | "Wallet"
+  totalValue: number
+  totalValueUSD: number
+  assets: {
+    token: string
+    amount: number
+    valueUSD: number
+  }[]
+  apy?: number
+  healthFactor?: number
+}
+
 export interface PortfolioAsset {
+  id?: string
   protocol: string
   type: "CDP" | "LP" | "Staking" | "Wallet"
   assets: {
@@ -22,6 +38,7 @@ export interface PortfolioAsset {
     amount: number
     valueUSD: number
   }[]
+  totalValue?: number
   totalValueUSD: number
   apy?: number
   healthFactor?: number

@@ -109,6 +109,6 @@ export interface Insights {
 export interface Metadata {
   analyzedAt: string;
   cachedUntil: string;
-  model: 'mock';
-  provider: 'mock';
+  model: 'mock' | 'rule-based';
+  provider: 'mock' | 'local';
 }

@@ -72,7 +72,7 @@ export function BatchTransactionExample() {
           <div className="flex items-start gap-2 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
             <AlertCircle className="h-4 w-4 text-yellow-500 flex-shrink-0 mt-0.5" />
             <p className="text-xs text-yellow-200">
-              Your wallet doesn't support batch transactions. Transactions will be sent
+              Your wallet does not support batch transactions. Transactions will be sent
               sequentially. Consider using Coinbase Smart Wallet for the best experience.
             </p>
           </div>

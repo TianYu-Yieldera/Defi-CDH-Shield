@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { usePriceStore } from '@/store/priceStore';
 
 interface TokenPrice {
@@ -33,15 +34,19 @@ export function usePriceData() {
     queryFn: fetchPrices,
     refetchInterval: 5000,
     staleTime: 2000,
-    onSuccess: (data) => {
+  });
+
+  // Update price store when data changes
+  useEffect(() => {
+    if (query.data) {
       updatePrices(
-        data.map((price) => ({
+        query.data.map((price) => ({
           ...price,
           timestamp: Date.now(),
         }))
       );
-    },
-  });
+    }
+  }, [query.data, updatePrices]);
 
   return {
     prices: query.data || [],

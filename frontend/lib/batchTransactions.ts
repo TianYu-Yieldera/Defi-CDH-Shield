@@ -1,9 +1,10 @@
 /**
- * Batch Transaction Utilities for Smart Wallet
- * Coinbase Smart Wallet supports batch transactions for improved UX
+ * Batch Transaction Utilities for Smart Wallet with Paymaster Support
+ * Coinbase Smart Wallet supports batch transactions and sponsored gas
  */
 
-import { Account, Chain, Transport, WalletClient } from "viem";
+import { Account, Chain, Transport, WalletClient, encodeFunctionData as viemEncodeFunctionData } from "viem";
+import { erc20Abi } from "viem";
 
 export interface BatchCall {
   to: `0x${string}`;
@@ -11,38 +12,89 @@ export interface BatchCall {
   data: `0x${string}`;
 }
 
+export interface BatchTransactionOptions {
+  // Enable sponsored (gas-free) transactions via Paymaster
+  sponsored?: boolean;
+  // Custom Paymaster URL (optional, uses Coinbase default for testnet)
+  paymasterUrl?: string;
+}
+
+export interface BatchTransactionResult {
+  hash?: `0x${string}`;
+  success: boolean;
+  sequential?: boolean;
+  sponsored?: boolean;
+  error?: unknown;
+}
+
+// Check if sponsored transactions should be enabled
+function shouldSponsorGas(): boolean {
+  return process.env.NEXT_PUBLIC_SPONSOR_GAS === 'true';
+}
+
+// Get Paymaster URL from environment
+function getPaymasterUrl(): string | undefined {
+  return process.env.NEXT_PUBLIC_PAYMASTER_URL || undefined;
+}
+
 /**
- * Execute multiple transactions in a single batch
- * This reduces user interactions and gas costs
+ * Execute multiple transactions in a single batch with optional Paymaster
+ * This reduces user interactions and can make transactions gas-free
  */
 export async function executeBatchTransaction(
   walletClient: WalletClient<Transport, Chain, Account>,
-  calls: BatchCall[]
-) {
+  calls: BatchCall[],
+  options: BatchTransactionOptions = {}
+): Promise<BatchTransactionResult> {
   try {
-    // Check if wallet supports batch transactions
-    // Coinbase Smart Wallet supports this via ERC-4337 UserOp
     const account = walletClient.account;
 
     if (!account) {
       throw new Error("No account connected");
     }
 
-    // For Smart Wallet, we can use sendCalls (if available)
-    // Otherwise, fall back to sequential transactions
+    // Determine if we should use sponsored transactions
+    const useSponsored = options.sponsored ?? shouldSponsorGas();
+    const paymasterUrl = options.paymasterUrl ?? getPaymasterUrl();
+
+    // For Smart Wallet, we can use sendCalls with capabilities
     if ("sendCalls" in walletClient && typeof walletClient.sendCalls === "function") {
-      // @ts-ignore - sendCalls is not in standard type but available in Coinbase Smart Wallet
-      const hash = await walletClient.sendCalls({
+      // Build capabilities for Paymaster if sponsored is enabled
+      const capabilities: Record<string, unknown> = {};
+
+      if (useSponsored) {
+        // Coinbase Smart Wallet Paymaster capabilities
+        // For BASE Sepolia, Coinbase provides free Paymaster automatically
+        // For mainnet, you need a CDP Paymaster URL
+        capabilities.paymasterService = paymasterUrl
+          ? { url: paymasterUrl }
+          : true; // Use default Coinbase Paymaster
+      }
+
+      // @ts-ignore - sendCalls is available in Coinbase Smart Wallet
+      const result = await walletClient.sendCalls({
         calls: calls.map((call) => ({
           to: call.to,
           value: call.value || 0n,
           data: call.data,
         })),
+        capabilities: Object.keys(capabilities).length > 0 ? capabilities : undefined,
       });
 
-      return { hash, success: true };
+      // sendCalls may return an object with id or directly a hash
+      const hash = (
+        typeof result === 'string'
+          ? result
+          : (result as { id?: string })?.id
+      ) as `0x${string}` | undefined;
+
+      return {
+        hash,
+        success: true,
+        sponsored: useSponsored,
+      };
     } else {
-      // Fallback: send transactions sequentially
+      // Fallback: send transactions sequentially (no Paymaster support)
       console.warn("Batch transactions not supported, sending sequentially");
 
       const hashes: `0x${string}`[] = [];
@@ -59,7 +111,12 @@ export async function executeBatchTransaction(
         hashes.push(hash);
       }
 
-      return { hash: hashes[hashes.length - 1], success: true, sequential: true };
+      return {
+        hash: hashes[hashes.length - 1],
+        success: true,
+        sequential: true,
+        sponsored: false,
+      };
     }
   } catch (error) {
     console.error("Batch transaction failed:", error);
@@ -68,17 +125,29 @@ export async function executeBatchTransaction(
 }
 
 /**
- * Example: Batch approve and deposit
+ * Execute a single sponsored transaction
+ */
+export async function executeSponsoredTransaction(
+  walletClient: WalletClient<Transport, Chain, Account>,
+  call: BatchCall
+): Promise<BatchTransactionResult> {
+  return executeBatchTransaction(walletClient, [call], { sponsored: true });
+}
+
+/**
+ * Example: Batch approve and deposit with Paymaster
  */
 export async function batchApproveAndDeposit(
   walletClient: WalletClient<Transport, Chain, Account>,
   tokenAddress: `0x${string}`,
   spenderAddress: `0x${string}`,
   amount: bigint,
-  depositData: `0x${string}`
+  depositData: `0x${string}`,
+  options: BatchTransactionOptions = {}
 ) {
-  // ERC20 approve function signature
-  const approveData = encodeFunctionData({
+  // Use viem's encodeFunctionData for ERC20 approve
+  const approveData = viemEncodeFunctionData({
+    abi: erc20Abi,
     functionName: "approve",
     args: [spenderAddress, amount],
   });
@@ -94,11 +163,11 @@ export async function batchApproveAndDeposit(
     },
   ];
 
-  return executeBatchTransaction(walletClient, calls);
+  return executeBatchTransaction(walletClient, calls, options);
 }
 
 /**
- * Example: Batch CDP protection actions
+ * Example: Batch CDP protection actions with Paymaster
  */
 export async function batchCDPProtection(
   walletClient: WalletClient<Transport, Chain, Account>,
@@ -106,29 +175,15 @@ export async function batchCDPProtection(
   actions: {
     positionId: bigint;
     actionData: `0x${string}`;
-  }[]
+  }[],
+  options: BatchTransactionOptions = {}
 ) {
   const calls: BatchCall[] = actions.map((action) => ({
     to: cdpShieldAddress,
     data: action.actionData,
   }));
 
-  return executeBatchTransaction(walletClient, calls);
-}
-
-/**
- * Encode function data helper (simplified)
- * In production, use viem's encodeFunctionData
- */
-function encodeFunctionData({
-  functionName,
-  args,
-}: {
-  functionName: string;
-  args: any[];
-}): `0x${string}` {
-  // This is a placeholder - use viem's encodeFunctionData in production
-  return "0x" as `0x${string}`;
+  return executeBatchTransaction(walletClient, calls, options);
 }
 
 /**
@@ -138,7 +193,24 @@ export function supportsBatchTransactions(
   walletClient: WalletClient<Transport, Chain, Account> | undefined
 ): boolean {
   if (!walletClient) return false;
-
-  // Check if sendCalls method exists (Coinbase Smart Wallet)
   return "sendCalls" in walletClient && typeof walletClient.sendCalls === "function";
+}
+
+/**
+ * Check if sponsored transactions are enabled
+ */
+export function isSponsoredEnabled(): boolean {
+  return shouldSponsorGas();
+}
+
+/**
+ * Check if wallet supports Paymaster (sponsored transactions)
+ * Coinbase Smart Wallet on BASE supports Paymaster
+ */
+export function supportsPaymaster(
+  walletClient: WalletClient<Transport, Chain, Account> | undefined
+): boolean {
+  // Paymaster is supported if batch transactions are supported
+  // (Coinbase Smart Wallet)
+  return supportsBatchTransactions(walletClient);
 }

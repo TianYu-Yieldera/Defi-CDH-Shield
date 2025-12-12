@@ -1,11 +1,11 @@
-import type { Position } from '@/types';
+import type { PortfolioAsset } from '@/types';
 import { mockPortfolioAssets } from '@/lib/mockData';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api';
 const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK_DATA !== 'false';
 
 export const portfolioApi = {
-  async getAssets(address: string): Promise<Position[]> {
+  async getAssets(address: string): Promise<PortfolioAsset[]> {
     if (USE_MOCK) {
       await new Promise((resolve) => setTimeout(resolve, 500));
       return mockPortfolioAssets;
@@ -18,11 +18,11 @@ export const portfolioApi = {
     return response.json();
   },
 
-  async getAsset(assetId: string): Promise<Position> {
+  async getAsset(assetId: string): Promise<PortfolioAsset> {
     if (USE_MOCK) {
       await new Promise((resolve) => setTimeout(resolve, 300));
 
-      const asset = mockPortfolioAssets.find((a) => a.id === assetId);
+      const asset = mockPortfolioAssets.find((a) => a.protocol === assetId);
       if (!asset) {
         throw new Error('Asset not found');
       }

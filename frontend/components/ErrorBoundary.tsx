@@ -51,7 +51,7 @@ export class ErrorBoundary extends React.Component<
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-muted-foreground">
-                We encountered an unexpected error. This has been logged and we'll look into it.
+                We encountered an unexpected error. This has been logged and we will look into it.
               </p>
 
               {process.env.NODE_ENV === "development" && this.state.error && (

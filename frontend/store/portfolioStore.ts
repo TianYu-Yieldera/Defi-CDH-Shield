@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
-import type { Position } from '@/types';
+import type { PortfolioAsset } from '@/types';
 
 interface ProtocolDistribution {
   protocol: string;
@@ -15,15 +15,15 @@ interface AssetTypeDistribution {
 }
 
 interface PortfolioState {
-  assets: Position[];
+  assets: PortfolioAsset[];
   totalValue: number;
   protocolDistribution: ProtocolDistribution[];
   assetTypeDistribution: AssetTypeDistribution[];
   isLoading: boolean;
   error: string | null;
 
-  setAssets: (assets: Position[]) => void;
-  updateAsset: (id: string, updates: Partial<Position>) => void;
+  setAssets: (assets: PortfolioAsset[]) => void;
+  updateAsset: (id: string, updates: Partial<PortfolioAsset>) => void;
   calculateTotalValue: () => void;
   updateDistribution: () => void;
   setLoading: (loading: boolean) => void;
@@ -40,13 +40,13 @@ const initialState = {
   error: null,
 };
 
-const calculateDistributions = (assets: Position[]) => {
+const calculateDistributions = (assets: PortfolioAsset[]) => {
   const protocolMap = new Map<string, number>();
   const typeMap = new Map<string, number>();
   let total = 0;
 
   assets.forEach((asset) => {
-    const value = asset.totalValue || 0;
+    const value = asset.totalValueUSD || asset.totalValue || 0;
     total += value;
 
     const currentProtocol = protocolMap.get(asset.protocol) || 0;
@@ -67,7 +67,7 @@ const calculateDistributions = (assets: Position[]) => {
   const assetTypeDistribution: AssetTypeDistribution[] = Array.from(
     typeMap.entries()
   ).map(([type, value]) => ({
-    type: type as AssetTypeDistribution['type'],
+    type: type.toLowerCase() as AssetTypeDistribution['type'],
     value,
     percentage: total > 0 ? (value / total) * 100 : 0,
   }));
@@ -116,7 +116,7 @@ export const usePortfolioStore = create<PortfolioState>()(
 
         calculateTotalValue: () => {
           const total = get().assets.reduce(
-            (sum, asset) => sum + (asset.totalValue || 0),
+            (sum, asset) => sum + (asset.totalValueUSD || asset.totalValue || 0),
             0
           );
           set({ totalValue: total }, false, 'calculateTotalValue');

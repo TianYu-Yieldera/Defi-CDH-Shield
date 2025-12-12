@@ -211,8 +211,8 @@ export default function PortfolioPage() {
                     </div>
                   ) : (
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                      {displayAssets.map((asset) => (
-                        <AssetCard key={asset.id} asset={asset} />
+                      {displayAssets.map((asset, index) => (
+                        <AssetCard key={asset.id || `${asset.protocol}-${index}`} asset={asset} />
                       ))}
                     </div>
                   )}
